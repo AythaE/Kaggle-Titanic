@@ -23,3 +23,20 @@ submit <- data.frame(PassengerID = test$PassengerId, Survived = test$Survived)
 
 # Save prediction
 write.csv(submit, file = "../predictions/gender.csv", row.names = FALSE)
+
+train$SurvivedP <- 0
+train$SurvivedP[train$Sex == 'female'] <- 1
+
+
+trainResults <- data.frame(Real = train$Survived, Predicho = train$SurvivedP)
+
+correct <- 0
+for(i in 1:nrow(trainResults)){
+  if(trainResults$Real[i] == trainResults$Predicho[i]){
+    print(i)
+    correct <- correct + 1
+  }
+    
+}
+tasaError <- correct/nrow(trainResults)
+print(paste("La tasa de error sobre el conjunto de train es: ", tasaError))

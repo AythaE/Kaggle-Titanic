@@ -48,7 +48,7 @@ library('scales') # visualization
 
 # Use ggplot2 to visualize the relationship between family size & survival
 ggplot(full[1:891,], aes(x = FamilySize, fill = factor(Survived))) +
-  geom_bar(stat='percent', position='dodge') +
+  geom_bar(stat='count', position='dodge') +
   scale_x_continuous(breaks=c(1:11)) +
   labs(x = 'Family Size') +
   theme_few()
@@ -101,3 +101,18 @@ submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
 
 # Save prediction
 write.csv(submit, file = "../predictions/featureEngineeringTree.csv", row.names = FALSE)
+
+
+PredictionTrain <- predict(fit, train, type = "class")
+trainResults <- data.frame(Real = train$Survived, Predicho = PredictionTrain)
+
+correct <- 0
+for(i in 1:nrow(trainResults)){
+  if(trainResults$Real[i] == trainResults$Predicho[i]){
+    print(i)
+    correct <- correct + 1
+  }
+  
+}
+tasaError <- correct/nrow(trainResults)
+print(paste("La tasa de error sobre el conjunto de train es: ", tasaError))

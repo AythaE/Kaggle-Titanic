@@ -172,3 +172,22 @@ submit <- rbind(submitMale, submitFemale)
 
 # Save prediction
 write.csv(submit, file = "../predictions/CForestDifferentSexs.csv", row.names = FALSE)
+
+
+
+PredictionTrainMale <- predict(fitMale, trainMale, OOB=TRUE, type = "response")
+PredictionTrainFemale <- predict(fitFemale, trainFemale, OOB=TRUE, type = "response")
+trainResultsMale <- data.frame(Real = trainMale$Survived, Predicho = PredictionTrainMale)
+trainResultsFemale <- data.frame(Real = trainFemale$Survived, Predicho = PredictionTrainFemale)
+
+trainResults <- rbind(trainResultsMale, trainResultsFemale)
+correct <- 0
+for(i in 1:nrow(trainResults)){
+  if(trainResults$Real[i] == trainResults$Predicho[i]){
+    print(i)
+    correct <- correct + 1
+  }
+  
+}
+tasaError <- correct/nrow(trainResults)
+print(paste("La tasa de error sobre el conjunto de train es: ", tasaError))

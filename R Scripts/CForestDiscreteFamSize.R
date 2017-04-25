@@ -182,3 +182,20 @@ submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
 
 # Save prediction
 write.csv(submit, file = "../predictions/CForestDiscreteFamSize.csv", row.names = FALSE)
+
+
+
+PredictionTrain <- predict(fit, train, OOB=TRUE, type = "response")
+trainResults <- data.frame(Real = train$Survived, Predicho = PredictionTrain)
+
+correct <- 0
+for(i in 1:nrow(trainResults)){
+  if(trainResults$Real[i] == trainResults$Predicho[i]){
+    print(i)
+    correct <- correct + 1
+  }
+  
+}
+tasaError <- correct/nrow(trainResults)
+print(paste("La tasa de error sobre el conjunto de train es: ", tasaError))
+

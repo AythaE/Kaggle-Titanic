@@ -154,10 +154,8 @@ test <- full[892:1309,]
 
 # Set a random seed to reproducible prediction
 set.seed(415)
-str(test)
 
-fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
-                      Embarked + Title + FamilySize + FamilyID2,
+fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID2,
                     data=train, 
                     importance=TRUE, 
                     ntree=2000)
@@ -165,8 +163,7 @@ fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + F
 varImpPlot(fit)
 
 # Create a Conditional inference forest predictor
-fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
-                 Embarked + Title + FamilySize + FamilyID,
+fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID,
                data = train, 
                controls=cforest_unbiased(ntree=2000, mtry=3))
 
@@ -183,3 +180,19 @@ submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
 
 # Save prediction
 write.csv(submit, file = "../predictions/CForestMiceAgeFamIDLessSmall.csv", row.names = FALSE)
+
+
+
+PredictionTrain <- predict(fit, train, OOB=TRUE, type = "response")
+trainResults <- data.frame(Real = train$Survived, Predicho = PredictionTrain)
+
+correct <- 0
+for(i in 1:nrow(trainResults)){
+  if(trainResults$Real[i] == trainResults$Predicho[i]){
+    print(i)
+    correct <- correct + 1
+  }
+  
+}
+tasaError <- correct/nrow(trainResults)
+print(paste("La tasa de error sobre el conjunto de train es: ", tasaError))
