@@ -40,6 +40,8 @@ Ejemplo de Indice final eliminando el enlace y añadiendo el número de página
 <!-- toc -->
 
 - [1. Exploración de datos](#1-exploracion-de-datos)
+  * [1.1. Edad y Sexo](#11-edad-y-sexo)
+  * [1.2. Clase social](#12-clase-social)
 - [2. Preprocesamiento de datos](#2-preprocesamiento-de-datos)
 - [3. Técnicas de clasificación](#3-tecnicas-de-clasificacion)
 - [4. Presentación y discusión de resultados](#4-presentacion-y-discusion-de-resultados)
@@ -53,15 +55,212 @@ Ejemplo de Indice final eliminando el enlace y añadiendo el número de página
 <div style="page-break-before: always;"></div>
 
 ## 1. Exploración de datos
+Una vez cargados los dataset en R lo primero es comprobar que variables contienen, para ello se puede utilizar la función `str(dataset)` que nos da una descripción de la estructura interna de este
+```
+> str(train)
+'data.frame':	891 obs. of  12 variables:
+ $ PassengerId: int  1 2 3 4 5 6 7 8 9 10 ...
+ $ Survived   : int  0 1 1 1 0 0 0 0 1 1 ...
+ $ Pclass     : int  3 1 3 1 3 3 1 3 3 2 ...
+ $ Name       : Factor w/ 891 levels "Abbing, Mr. Anthony",..: 109 191 358 277 16 559 520 629 416 581 ...
+ $ Sex        : Factor w/ 2 levels "female","male": 2 1 1 1 2 2 2 2 1 1 ...
+ $ Age        : num  22 38 26 35 35 NA 54 2 27 14 ...
+ $ SibSp      : int  1 1 0 1 0 0 0 3 0 1 ...
+ $ Parch      : int  0 0 0 0 0 0 0 1 2 0 ...
+ $ Ticket     : Factor w/ 681 levels "110152","110413",..: 525 596 662 50 473 276 86 396 345 133 ...
+ $ Fare       : num  7.25 71.28 7.92 53.1 8.05 ...
+ $ Cabin      : Factor w/ 148 levels "","A10","A14",..: 1 83 1 57 1 1 131 1 1 1 ...
+ $ Embarked   : Factor w/ 4 levels "","C","Q","S": 4 2 4 4 4 3 4 4 4 2 ...
+```
+
+Si buscamos la información proporcionada por Kaggle [1] de lo que significa cada variable nos encontramos ante la siguiente tabla
+
+Variable    | Descripción
+------------|-------------------------------------
+PassengerID | Identificador del pasajero
+Survived    | Sobrevivió (1) o murió (0)
+Pclass      | Clase del pasaje
+Name        | Nombre del pasajero y título
+Sex         | Sexo del pasajero
+Age         | Edad del pasajero
+SibSp       | Número de esposas o hermanos a bordo
+Parch       | Número de padres o hijos a bordo
+Ticket      | Número del pasaje
+Fare        | Tarifa del pasaje
+Cabin       | Cabina
+Embarked    | Puerto de embarque
+
+El problema a resolver es predecir el valor de la variable "Survived", en un primer análisis de la distribución de valores de esta variable se observa que solo se salvaron el 38,38% de los pasajeros.
+
+```
+> prop.table(table(train$Survived))
+
+        0         1
+0.6161616 0.3838384
+```
+Por ello siguiendo [2] como modelo inicial se puede predecir que todos mueren con lo que se consigue un porcentaje de acierto sobre test de 62,679% lo que cuadra con las observaciones realizadas sobre el conjunto de entrenamiento.
+
+### 1.1. Las mujeres y los niños primero
+En la sabiduría popular es famosa la frase "Las mujeres y los niños primero" así que resulta lógico buscar como se relacionan la edad y el sexo con las tasas de supervivencia. Si vemos la supervivencia entre hombres y mujeres vemos que es muy diferente salvándose muchas más mujeres:
+```
+> prop.table(table(train$Sex, train$Survived),1)
+
+                 0         1
+  female 0.2579618 0.7420382
+  male   0.8110919 0.1889081
+```
+
+Esto hace que podamos refinar el modelo inicial prediciendo que todas las mujeres sobrevivirán y que todos los hombres perecerán con lo que se consigue una tasa de acierto del 76,55% sobre test.
+
+Si consideramos como niños a los menores de 18 años, podemos comprobar al cotejar esta variable "Child" con el sexo y la tasa de supervivencia se observa que en el caso de los hombres tienen unas tasas de supervivencia mucho más altas.
+```
+> aggregate(Survived ~ Child + Sex, data=train, FUN=function(x) {sum(x)/length(x)})
+  Child    Sex  Survived
+1     0 female 0.7528958
+2     1 female 0.6909091
+3     0   male 0.1657033
+4     1   male 0.3965517
+```
+
+A modo de resumen de esto veáse la siguiente gráfica
+<img src="imgs/SupervivientesPorEdadYSexo.png" alt="Superviventes por edad y sexo" style="width: 400px; height: auto; display: block; margin: auto;"/>
+
+Por todo ello se deduce que la edad y el sexo tendrán un papel determinante en la supervivencia, habrá que tratar la edad ya que contiene 177 valores perdidos (cerca del 20%).
+
+### 1.2. Clase social
+Otro factor que en principio podría ser determinante es la clase social ya que existían profundas diferencias en el pasaje del Titanic. Esto puede venir representado en la clase del billete (variable `Pclass`) o en el precio de este (`Fare`). Si comenzamos analizando la clase del pasaje se observa que obviamente existen muchos menos billetes de 1ª y 2ª clase que de 3ª. Analizando el porcentaje de supervivencia se puede apreciar en la siguiente gráfica como los pasajeros de las clases elevadas tenían más del doble del porcentaje de supervivencia que los de clase 3.
+
+<img src="imgs/PorcentajeSupervivenciaPclass.png" alt="Porcentaje de supervivencia por clase" style="width: 300px; height: auto; display: block; margin: auto;"/>
+
+Si pasamos a analizar el precio del pasaje se observan profundas diferencias con precios por debajo de 10 hasta los 500. Al ser un atributo continuo con una gran cantidad de valores lo discretizo en 4 valores: <10, 10-20, 20-30, 30+. Una vez hecho esto analizamos los porcentajes de supervivencia observando como se incrementan las posibilidades de sobrevivir cuando más se haya pagado por el pasaje, lo que cuadra con las observaciones realizadas sobre la variable `Pclass`.
+```
+> prop.table(table(train$FareDiscrete, train$Survived),1)
+
+                0         1
+  <10   0.8005952 0.1994048
+  10-20 0.5754190 0.4245810
+  20-30 0.5735294 0.4264706
+  30+   0.4125000 0.5875000
+```
+
+### 1.3. Uniendo ambos criterios
+Si representamos las tasas de supervivencia respecto al sexo, la clase del pasaje y el dinero pagado por este obtenemos la siguiente tabla de la que cabe destacar las filas 8 y 9 (destacadas con ##) las cuales rompen la tendencia en las mujeres que establece que todas sobreviven, si son de 3ª clase y han pagado más de 20 por su pasaje tienen unas altas probabilidades de morir.
+
+```
+> aggregate(Survived ~ FareDiscrete + Pclass + Sex, data=train, FUN=function(x) {sum(x)/length(x)})
+   FareDiscrete Pclass    Sex  Survived
+1         20-30      1 female 0.8333333
+2           30+      1 female 0.9772727
+3         10-20      2 female 0.9142857
+4         20-30      2 female 0.9000000
+5           30+      2 female 1.0000000
+6           <10      3 female 0.5937500
+7         10-20      3 female 0.5813953
+8         20-30      3 female 0.3333333 ##
+9           30+      3 female 0.1250000 ##
+10          <10      1   male 0.0000000
+11        20-30      1   male 0.4000000
+12          30+      1   male 0.3837209
+13          <10      2   male 0.0000000
+14        10-20      2   male 0.1587302
+15        20-30      2   male 0.1600000
+16          30+      2   male 0.2142857
+17          <10      3   male 0.1115385
+18        10-20      3   male 0.2368421
+19        20-30      3   male 0.1250000
+20          30+      3   male 0.2400000
+```
+Si asumimos que este comportamiento se dará también en el conjunto de test llegamos a crear un modelo con un 77,99% de acierto.
+
+Si además de esto añadimos la variable `Child`, que recordemos es una variable binaria con valor 1 para los menores de 18 años, llegamos a la siguiente tabla. A las conclusiones previas podemos añadir que los niños masculinos se salvan en su mayoría con la excepción de los de clase 3 que han pagado menos de 10 o más de 20
+```
+> aggregate(Survived ~ FareDiscrete + Pclass + Child+ Sex, data=train, FUN=function(x) {sum(x)/length(x)})
+   FareDiscrete Pclass Child    Sex   Survived
+1         20-30      1     0 female 0.83333333
+2           30+      1     0 female 0.98750000
+3         10-20      2     0 female 0.90625000
+4         20-30      2     0 female 0.88000000
+5           30+      2     0 female 1.00000000
+6           <10      3     0 female 0.56140351
+7         10-20      3     0 female 0.50000000
+8         20-30      3     0 female 0.40000000
+9           30+      3     0 female 0.11111111
+10          30+      1     1 female 0.87500000
+11        10-20      2     1 female 1.00000000
+12        20-30      2     1 female 1.00000000
+13          30+      2     1 female 1.00000000
+14          <10      3     1 female 0.85714286
+15        10-20      3     1 female 0.73333333
+16        20-30      3     1 female 0.16666667
+17          30+      3     1 female 0.14285714
+18          <10      1     0   male 0.00000000
+19        20-30      1     0   male 0.40000000
+20          30+      1     0   male 0.35365854
+21          <10      2     0   male 0.00000000
+22        10-20      2     0   male 0.11864407
+23        20-30      2     0   male 0.04761905
+24          30+      2     0   male 0.00000000
+25          <10      3     0   male 0.10931174
+26        10-20      3     0   male 0.12903226
+27        20-30      3     0   male 0.07142857
+28          30+      3     0   male 0.41666667
+29          30+      1     1   male 1.00000000
+30        10-20      2     1   male 0.75000000
+31        20-30      2     1   male 0.75000000
+32          30+      2     1   male 1.00000000
+33          <10      3     1   male 0.15384615 ##
+34        10-20      3     1   male 0.71428571
+35        20-30      3     1   male 0.20000000 ##
+36          30+      3     1   male 0.07692308 ##
+```
+Con esto podemos construir otro modelo que obtiene la misma puntuación que el previo por lo que probablemente las conclusiones extraídas sobre el conjunto de entrenamiento no sean directamente aplicables por ser demasiado adaptadas a este, encontrándonoos ante un problema de "sobreentrenamiento".
+
+<!-- Salto de página -->
+<div style="page-break-before: always;"></div>
+
+### 1.4. Otras variables
+La variable `PassengerID` corresponde a un identificador único del pasajero por lo que no aportaría nada a predecir su supervivencia o no. Respecto al atributo `Name` en principio podría parecer que nos encontramos ante un caso similar, pero este no solo contiene el nombre del pasajero si no su titulo social (Mr para hombre casado, Master para soltero,...) y esta demuestra ser una información muy importante como comentaré en el siguiente apartado. Por acabar con los atributos de identificación el atributo `Ticket` corresponde a un identificador del billete por lo que no lo usaré por idénticos motivos.
+
+Los atributos `SibSp` y `Parch` dan una idea del tamaño de la familia que se encuentra a bordo del barco lo cual puede ser útil para determinan la supervivencia o no de las diferentes familias como se explicará en el siguiente apartado.
+
+El atributo `Cabin` podría ser interesante conociendo la posición de los camarotes del barco pero tiene un total de 687 valores perdidos de 891 lo que imposibilita usarlo en la práctica.
+
+El atributo `Embarked` podría ser interesante a priori si observamos los porcentajes de supervivencia donde Cherbourg destaca por encima de todos, mencionar que la primer fila corresponde a 2 valores perdidos de este atributo.
+```
+> prop.table(table(train$Embarked, train$Survived),1)
+
+            0         1
+    0.0000000 1.0000000
+  C 0.4464286 0.5535714
+  Q 0.6103896 0.3896104
+  S 0.6630435 0.3369565
+```
+Que los pasajeros que han embarcado en una localización tengan más probabilidades de sobrevivir no parece tener sentido, sin embargo si analizamos la distribución de clases de los pasajeros embarcados en un lugar u otro nos encontramos que algo más de la mitad de los pasajeros que embarcaron en Cherbourg pertenecen a la 1ª clase lo que podría explicar su mayor tasa de supervivencia [3].
+
+<img src="imgs/PorcentajePclassEmbarked.png" alt="Distribución de clases por puerto de embarque" style="width: 300px; height: auto; display: block; margin: auto;"/>
+
 
 ## 2. Preprocesamiento de datos
+### 2.1. Integración y detección de conflictos e inconsistencias en los datos: valores perdidos, valores fuera de rango, ruido, etc.
+### 2.2. Transformaciones: normalizacion, agregacion, generacion de caracterısticas adicionales, etc.
+### 2.3. Reduccion de datos: tecnicas utilizadas para seleccion de caracterısticas, seleccion de ejemplos, discretizacion, agrupacion de valores, etc.
 
 ## 3. Técnicas de clasificación
+### 3.1. Árbol de decisión simple
+### 3.2. Random Forest
+### 3.3. CForest
 
 ## 4. Presentación y discusión de resultados
+Grafica arbol inicial.
+Grafica importancia.
 
+Comentar prueba final toqueteando parametros que no lleva a ningun lado, habria que profundizar
 ## 5. Conclusiones y trabajos futuros
-Xgboost pero tal cual parece dar problemas, probar tecnicas que le vayan bien como
+Falta de tiempo
+
+Xgboost pero tal cual parece dar problemas, probar tecnicas que le vayan bien como Smote
+
+Seguir preprocesamiento de [3] y toquetear los parámetros de clasificador
 <!-- Salto de página -->
 <div style="page-break-before: always;"></div>
 
@@ -105,12 +304,24 @@ Nº de solución | Descripción Preprocesamiento | Algoritmos y Software | % Aci
 
 <p id="1">
 
-[1]: T. Stephens (n.d). Titanic: Getting Started with R. Recuperado el 25 de Abril de 2017, desde <http://trevorstephens.com/kaggle-titanic-tutorial/getting-started-with-r/>
+[1]: Kaggle (n.d). Titanic: Machine Learning from Disaster. Recuperado el 25 de Abril de 2017, desde <https://www.kaggle.com/c/titanic/>
 
 </p>
 
 <p id="2">
 
-[2]: M.L. Risdal (2016). Exploring the Titanic Dataset. Recuperado el 25 de Abril de 2017, desde <https://www.kaggle.io/svf/924638/c05c7b2409e224c760cdfb527a8dcfc4/__results__.html>
+[2]: T. Stephens (n.d). Titanic: Getting Started with R. Recuperado el 25 de Abril de 2017, desde <http://trevorstephens.com/kaggle-titanic-tutorial/getting-started-with-r/>
+
+</p>
+
+<p id="3">
+
+[3]: Z. Kremonic (n.d). Titanic Random Forest: 82.78%. Recuperado el 25 de Abril de 2017, desde <https://www.kaggle.com/zlatankr/titanic/titanic-random-forest-82-78/run/806902>
+
+</p>
+
+<p id="4">
+
+[4]: M.L. Risdal (2016). Exploring the Titanic Dataset. Recuperado el 25 de Abril de 2017, desde <https://www.kaggle.io/svf/924638/c05c7b2409e224c760cdfb527a8dcfc4/__results__.html>
 
 </p>
