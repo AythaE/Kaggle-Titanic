@@ -14,6 +14,7 @@
 ## Nombre del equipo: **AythaE**
 ## Ranking: **452** Puntuación: **0.8134**
 </br>
+
 ### Sistemas Inteligentes para la Gestión en la Empresa
 ### Máster en Ingeniería Informática
 ### Curso 2016/17
