@@ -40,7 +40,6 @@ full$Title <- factor(full$Title)
 full$FamilySize <- full$SibSp + full$Parch + 1
 
 
-full$FamilySize <- full$SibSp + full$Parch + 1
 
 library('ggplot2') # visualization
 library('ggthemes') # visualization
