@@ -94,11 +94,15 @@ AgePrediction <- full$Age
 AgePrediction[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 
 # Plot age distributions
-par(mfrow=c(1,2))
+op <- par(mfrow=c(1,2))
+
 hist(full$Age, freq=F, main='Age: Original Data', 
      col='darkgreen', ylim=c(0,0.04))
 hist(AgePrediction, freq=F, main='Age: Predicted Data', 
      col='lightgreen', ylim=c(0,0.04))
+
+## At end of plotting, reset to previous settings:
+par(op)
 
 full$Age[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 

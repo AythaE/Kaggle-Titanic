@@ -100,12 +100,17 @@ set.seed(129)
 mice_mod <- mice(full[, !names(full) %in% c('PassengerId','Name','Ticket','Cabin','Surname','FamilyID','Survived')], method='rf') 
 
 mice_output <- complete(mice_mod)
+
 # Plot age distributions
-par(mfrow=c(1,2))
+op <- par(mfrow=c(1,2))
+
 hist(full$Age, freq=F, main='Age: Original Data', 
      col='darkgreen', ylim=c(0,0.04))
-hist(mice_output$Age, freq=F, main='Age: Predicted Data', 
+hist(AgePrediction, freq=F, main='Age: Predicted Data', 
      col='lightgreen', ylim=c(0,0.04))
+
+## At end of plotting, reset to previous settings:
+par(op)
 
 full$Age <- mice_output$Age
 

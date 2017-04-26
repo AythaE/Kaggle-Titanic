@@ -66,7 +66,7 @@ full$FamilySizeDiscrete[full$FamilySize > 4] <- 'large'
 full$FamilySizeDiscrete <- factor(full$FamilySizeDiscrete)
 
 # Show family size by survival using a mosaic plot
-mosaicplot(table(full$FamilySizeDiscrete, full$Survived), main='Family Size by Survival', shade=TRUE)
+mosaicplot(table(full$FamilySizeDiscrete, full$Survived), main='Tamaño de familia por supervivencia', shade=TRUE)
 
 # Extract the surname to create a FamilyID
 full$Surname <- sapply(full$Name, FUN=function(x) {strsplit(x, split='[,.]')[[1]][1]})
@@ -104,11 +104,15 @@ AgePrediction <- full$Age
 AgePrediction[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 
 # Plot age distributions
-par(mfrow=c(1,2))
+op <- par(mfrow=c(1,2))
+
 hist(full$Age, freq=F, main='Age: Original Data', 
      col='darkgreen', ylim=c(0,0.04))
 hist(AgePrediction, freq=F, main='Age: Predicted Data', 
      col='lightgreen', ylim=c(0,0.04))
+
+## At end of plotting, reset to previous settings:
+par(op)
 
 full$Age[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 

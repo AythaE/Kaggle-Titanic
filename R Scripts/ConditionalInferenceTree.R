@@ -94,11 +94,15 @@ AgePrediction <- full$Age
 AgePrediction[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 
 # Plot age distributions
-par(mfrow=c(1,2))
+op <- par(mfrow=c(1,2))
+
 hist(full$Age, freq=F, main='Age: Original Data', 
      col='darkgreen', ylim=c(0,0.04))
 hist(AgePrediction, freq=F, main='Age: Predicted Data', 
      col='lightgreen', ylim=c(0,0.04))
+
+## At end of plotting, reset to previous settings:
+par(op)
 
 full$Age[is.na(full$Age)] <- predict(Agefit, full[is.na(full$Age),])
 
@@ -143,7 +147,9 @@ fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
                data = train, 
                controls=cforest_unbiased(ntree=2000, mtry=3))
 
-
+str(fit)
+plot(fit, ylim=c(0,0.36))
+legend('topright', colnames(fit$err.rate), col=1:3, fill=1:3)
 # Use the model to predict over the test dataset
 Prediction <- predict(fit, test, OOB=TRUE, type = "response")
 
