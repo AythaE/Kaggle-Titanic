@@ -40,10 +40,18 @@ Ejemplo de Indice final eliminando el enlace y añadiendo el número de página
 <!-- toc -->
 
 - [1. Exploración de datos](#1-exploracion-de-datos)
-  * [1.1. Edad y Sexo](#11-edad-y-sexo)
+  * [1.1. Las mujeres y los niños primero](#11-las-mujeres-y-los-ninos-primero)
   * [1.2. Clase social](#12-clase-social)
+  * [1.3. Uniendo ambos criterios](#13-uniendo-ambos-criterios)
+  * [1.4. Otras variables](#14-otras-variables)
 - [2. Preprocesamiento de datos](#2-preprocesamiento-de-datos)
+  * [2.1. Integración y detección de conflictos e inconsistencias en los datos](#21-integracion-y-deteccion-de-conflictos-e-inconsistencias-en-los-datos)
+  * [2.2. Transformaciones](#22-transformaciones)
+  * [2.3. Reducción de datos](#23-reduccion-de-datos)
 - [3. Técnicas de clasificación](#3-tecnicas-de-clasificacion)
+  * [3.1. Árbol de decisión simple](#31-arbol-de-decision-simple)
+  * [3.2. Random Forest](#32-random-forest)
+  * [3.3. CForest](#33-cforest)
 - [4. Presentación y discusión de resultados](#4-presentacion-y-discusion-de-resultados)
 - [5. Conclusiones y trabajos futuros](#5-conclusiones-y-trabajos-futuros)
 - [6. Listado de soluciones](#6-listado-de-soluciones)
@@ -241,14 +249,137 @@ Que los pasajeros que han embarcado en una localización tengan más probabilida
 
 
 ## 2. Preprocesamiento de datos
-### 2.1. Integración y detección de conflictos e inconsistencias en los datos: valores perdidos, valores fuera de rango, ruido, etc.
-### 2.2. Transformaciones: normalizacion, agregacion, generacion de caracterısticas adicionales, etc.
-### 2.3. Reduccion de datos: tecnicas utilizadas para seleccion de caracterısticas, seleccion de ejemplos, discretizacion, agrupacion de valores, etc.
+La realización de este preprocesamiento se ha llevado a cabo a la par en los datasets `train` y `test` por lo que por comodidad los he unido en un único dataset `full` del siguiente modo
+```
+test$Survived <- NA
+full <- rbind(train, test)
+```
+### 2.1. Integración y detección de conflictos e inconsistencias en los datos
+
+Como ya he comentado en el apartado previo existen diversas variables con valores perdidos, he tratado solo algunas de ellas, ya que otras como `Cabin` tienen un número tan elevado de valores perdidos que resulta muy complicado utilizarlas ya que hay que tener cuidado con las imputaciones porque siempre que las realizamos estamos variando los datos originales y podemos llegar a crear modelos con los datos artificiales que funcionen muy bien, pero que no se se adapten a los datos reales que al final es el objetivo.
+
+Como he concluido en el análisis exploratorio la **edad** parece ser un factor determinante para predecir la supervivencia, también como he comentado tiene cerca del 20% de valores perdidos, por lo que una imputación podría mejorar sustancialmente la calidad de los modelos construidos. Para realizar esta imputación he probado dos técnicas distintas:
+
+- **Árbol de regresión**: usando el paquete `rpart` y su método homónimo con el método "anova" he predicho los valores perdidos usando las variables `Pclass`, `Sex`, `SibSp`, `Parch`, `Fare`, `Embarked`, `Title` y `FamilySize`. En la siguiente gráfica se puede observar la distribución de frecuencias relativas de la edad antes y después de imputar.
+
+<img src="imgs/AgeImputationAnova.png" alt="Distribución de frecuencias de la edad" style="width: 250px; height: auto; display: block; margin: auto;">
+
+- **Utilizando el paquete `mice`**: Usando dicho paquete con el método random forest a partir de las variables `Pclass`, `Sex`, `Age`, `SibSp`, `Parch`, `Fare`, `Embarked`, `Tittle` y `FamilySize`. En la siguiente gráfica se observa la distribución de frecuencias con este método.
+
+<img src="imgs/AgeImputationMice.png" alt="Distribución de frecuencias de la edad" style="width: 250px; height: auto; display: block; margin: auto;">
+
+A pesar de que el método mice obtiene una distribución de frecuencias más similar, lo que indica que la imputación ha variado menos los datos originales, he obtenido mis mejores resultados con el árbol de regresión. Hay que tomar esta conclusión con cautela ya que no he realizado una comparación directa con el resto de parámetros iguales, si no que he creado modelos distintos modificando su preprocesamiento e imputación. Por lo que he obtenido mejores resultado con la combinación de preprocesamiento e imputación con árbol.
+
+Otra variable con valores perdidos que he tratado ha sido **`Embarked`**, esta tiene únicamente 2 valores perdidos, por lo que no tiene mucho sentido montar un modelo predictivo para dos valores. Por simplicidad he decidido darles el valor "S" (Southampton) ya que es el más numeroso de los tres.
+
+Siguiendo la tendencia de esta variable he tratado también **`Fare`** la cual tiene 1 valor perdido, para librarme de él le he asignado la mediana de esta variable.
+
+### 2.2. Transformaciones
+En este campo es donde he realizado más trabajo de preprocesamiento, como ya he adelantado resulta muy destacada la generación de la variable **`Title`** con el título social de los individuos a partir de los datos del nombre. Descomponiendo estos por "," y "." y seleccionando el segundo elemento que corresponde al título. Si observamos la distribución de títulos vemos que claramente hay algunos muy numerosos como `Mr` de hombre casado, `Miss` de mujer soltera... mientras otros que apenas tienen unas pocas apariciones. Estos últimos son títulos más distinguidos como el capitán del barco, una condesa o algunos rangos militares. Con el fin de usar esta variable de una manera más cómoda he discretizado esta variable como describiré en el apartado venidero.
+
+Como ya he indicado en el análisis exploratorio los campos `Parch` y `SibSp` nos dan una idea del tamaño de la familia que viajaba junta en el barco, por ello he decidido combinar la información de ambos creando la variable **`FamilySize`** calculada como `Parch` + `SibSp` + 1 para contar al mismo pasajero. Si observamos la supervivencia respecto a esta variable.
+
+<img src="imgs/SupervivenciaVsFamSize.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 250px; height: auto; display: block; margin: auto;">
+
+Se aprecia que existe cierta ventaja para las familias de entre 2 y 4 miembros a la hora de sobrevivir, por lo que este campo probablemente sea útil para predecir la supervivencia. Para recoger esta ventaja he probado discretizando esta variable como comentaré a continuación.
+
+Usando esta recién creada variable me planteé si se podría observar alguna ventaja en la supervivencia de familias enteras, es decir si los miembros de una misma tenían más posibilidades de salvarse o morir todos juntos. Para ello he creado la variable **`FamilyID`** a partir del apellido y el numero de miembros de la familia. Esto tiene ciertos problemas ya que los apellidos se podrían repetir o no tiene sentido crear un FamilyID para personas que viajen en solitario. Partiendo de la hipótesis de que puede suponer una ventaja/desventaja viajar en una familia, esta se materializará más en una familia con algunos hijos así que descartaré todas las familias con menos de 2 miembros dándoles el valor "Small" para esta variable. Esto unido a que concateno el tamaño de familia al apellido hace complicado que existan 2 familias con igual apellido e idénticos miembros a bordo del barco, con lo que resolvería el problema de los apellidos iguales.
+
+### 2.3. Reducción de datos
+
+Como comentaba he discretizado la variable **título**, con el siguiente comando de R podemos apreciar la distribución de valores de dicha variable
+```
+> table(full$Title)
+
+        Capt          Col          Don         Dona           Dr     Jonkheer
+           1            4            1            1            8            1
+        Lady        Major       Master         Miss         Mlle          Mme
+           1            2           61          260            2            1
+          Mr          Mrs           Ms          Rev          Sir the Countess
+         757          197            2            8            1            1
+```
+
+Se aprecia que hay algunas muy poco numerosas que podrían derivar en problemas de sobreaprendizaje al crear modelos a partir de estos datos, por ello reduciré sus valores. Los títulos más distinguidos son aquellos que tienen un menor número de apariciones, por ello he agrupado los titulós distinguidos masculinos ('Capt', 'Don', 'Major', 'Sir') en el valor 'Sir' y los femeninos ('Dona', 'Lady', 'the Countess', 'Jonkheer') en el valor 'Lady'. Respecto a otros valores poco frecuentes pero que no indican distinción como 'Mlle' (mademoiselle en francés), 'Ms' o 'Mme' (madame en fracés) he probado dos agrupaciones según se aconseja en [2] y [4]. En el primer caso he agrupado 'Mme' y 'Mlle' en 'Mlle' por considerarlo equivalente, mientras que en el segundo he asociado 'Ms' y 'Mlle' con 'Miss' haciendo lo propio con 'Mme' al sustituirlo por 'Mrs'. He obtenido mejores resultados con el primer enfoque, pero una vez más nos los comparado en igualdad de condiciones, por lo que no se pueden tomar mis conclusiones al pie de la letra.
+
+Tambíen es posible discretizar el **tamaño de la familia** para intentar recoger esa ventaja que aprecia en las familias de 2 a 4 miembros como aconseja [4]. Para ello creo 3 grupos:
+- Familia pequeña "small": las familias de entre 2 y 4 miembros.
+- Familia individual "single": las personas que viajan solas.
+- Familia grande "large": las familias de más de 4 miembros.
+
+Como se aprecia en el siguiente gráfico de mosaico existen más posibilidades de sobrevivir en una familia pequeña como habíamos observado previamente.
+
+<img src="imgs/famsizeBySurvived.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 300px; height: auto; display: block; margin: auto;">
+
+A pesar de esto no he conseguido mejorar mis resultados con esta discretización. Por ello se me ocurrió que otra forma de reflejar estas penalizaciones de supervivencia respecto al tamaño de la familia, al menos parcialmente, era usar el atributo **`FamilyID`** cambiando el criterio de considerar a una familia pequeña de 2 miembros (que teóricamente tiene más posibilidades de sobrevivir) a 1, con lo que obtengo un número mayor de ids, pero otra vez más tampoco esto funciona como puedo esperar.
 
 ## 3. Técnicas de clasificación
+Antes de comentar las técnicas de clasificación utilizadas comentar que antes de usar ninguna técnica propiamente dicha he creado ciertos "modelos" iniciales como ya he ido comentando en el análisis exploratorio de datos. Estos modelos se basan en conclusiones iniciales extraídas de los datos y en principio son muy simples, pero llegan a ofrecer resultados bastante decentes de hasta un 77,99% lo que destaca la importancia del análisis exploratorio en un proceso de analítica de datos.
+
+También a modo general las técnicas que he empleado se engloban todas dentro de los árboles de decisión. He decidido decantarme por esta familia de clasificadores contra otros porque probablemente sean uno de los modelos más usados que además permite cierta interpretabilidad contra otros clasificadores como pueden ser las redes neuronales o las SVM. Junto a esto destacar que los últimos modelos son ensembles de arboles, es decir conjuntos de arboles distintos que clasifican y llegan a un acuerdo posterior, esto hace que se resuelvan los posibles problemas de sobreaprendizaje que puede sufrir un árbol de decisión individual y permite crear un modelo más robusto.
+
 ### 3.1. Árbol de decisión simple
+Primero concretaré el modelo de árbol de decisión empleado. Me he decantado por los arboles disponibles en el paquete `rpart`. He creado un árbol inicial sin preprocesamiento alguno que se construye con la siguiente sentencia.
+```
+> fit <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
+             data=train,
+             method="class")
+```
+Dicho modelo alcanza una puntuación de 78,469% de acierto. Como se puede apreciar no se utilizan todos los atributos para predecir, si no unos cuantos que han demostrado tener influencia en la supervivencia durante el análisis exploratorio. En la siguiente imagen podemos apreciar la forma que tiene este árbol, en verde aparecen los nodos con una mayoría que no ha sobrevivido y en ázul los que sí. Se observa que no es muy grande y que los atributos que primero aparecen (los más discriminantes) son precisamente los que he identificado en el análisis exploratorio. Contemplando esta imagen ºsale a relucir una característica fundamental de los árboles de decisión, su interpretabilidad, no resulta necesario saber como funciona internamente, simplemente viendo esta imagen cualquiera podría clasificar manualmente instancias siguiendo los pasos que se indican en cada bifurcación.
+
+<img src="imgs/initialDTree.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 300px; height: auto; display: block; margin: auto;">
+
+Añadiendo las variables generadas `FamilySize` sin discretizar, `Tittle` agrupado del primer modo y `FamilyID` considerando familia pequeña a aquella con menos de 2 miembros, construyo el siguiente árbol
+```
+fit <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID,
+             data=train,
+             method="class")
+```
+Que llega a alcanzar el 79,426% de acierto. En la siguiente imagen aparece la representación de este árbol, en esta ocasión las variables generadas han desplazado a las iniciales por lo que podemos deducir que son más importantes para determinar si una persona sobrevive o no.
+
+<img src="imgs/FengineDTree.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 300px; height: auto; display: block; margin: auto;">
+
 ### 3.2. Random Forest
+Random forest es un tipo de ensemble que comentaba antes formado por multiples árboles de decisión individuales, en concreto pertenece a los tipo bagging que se caracteriza porque los clasificadores individuales clasifican por separado y la clase final se asigna por voto mayoritario. Este es un algoritmo muy utilizado y que da baste buenos resultados, se basa en la creación de un elevado número de arboles de decisión con selección aleatoria de un pequeño número de variables para cada uno (por defecto la raíz cuadrada del número de variables) y usando muestreo con remplazamiento para la selección de items. Con esto construye árboles sin podar usando la medida de Gini para realizar las divisiones en los nodos. Esto en principio creará clasificadores individuales muy adaptados a los datos y que sufrirán de sobreentrenamiento con alta probabilidad, a priori puede parecer una desventaja, pero el hecho de tener un elevado número de arboles individuales cada uno sobreentrenado de distinta manera hace que los errores de unos se compensen los los otros.
+
+En concreto he usado el paquete `randomForest` de R, este tiene varias limitaciones como que no funciona bien con valores perdidos, por ello elimino los valores perdidos de las variables que usaré: `Age`, `Fare` y `Embarked` como he descrito previamente. Adicionalmente es necesario reducir los valores de la variable `FamilyID` ya que el algoritmo solo puede procesar factores de hasta 32 niveles (valores distintos) y esta variable tiene casi el doble. Para ello determino que se considere familia pequeña a aquella con tres o menos miembros en lugar de dos, con esto genero una variable `FamilyID2` de 22 niveles.
+
+Una vez preparados los datos de igual modo que con el arbol de decisión individual creo el modelo con el siguiente código especificando como parámetro que se creen 2000 árboles.
+```
+fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID2,
+                    data=train,
+                    importance=TRUE,
+                    ntree=2000)
+```
+
+Dicho modelo obtiene una puntuación de 77,512 % lo cual es inferior a los modelos de árboles de decisión individuales. Esto puede resultar extraño pero probablemente se deba a que la capacidad de los modelos más complejos como este se demuestra cuanto más grande sea el dataset. Un modelo más potente no es siempre mejor en todos los problemas como se demuestra de este rendimiento.
+
+Para analizar más en detalle el modelo construido aporto las siguientes gráficas:
+- A la izquierda podemos observar las medidas de importancia para cada uno de los atributos:
+    - _MeanDecreaseAcuracy_ determina cuanto empeoraría el modelo de media si eliminamos cada variable.
+    - _MeanDecreaseGini_ implica cuando se reduciría la medida de Gini en los arboles individuales sin dicha variable
+- A la derecha podemos observar la tasa de error con el número de arboles, la linea roja determina el error para predecir que un individuo muera, en verde para que sobreviva y en negro el error observado usando los items no seleccionados para construir el modelo, por lo que se predicen a modo de validación del modelo y dan una idea de como será capaz de generalizar este modelo.
+
+Respecto a la primera gráfica los resultados no resultan sorprendentes, las variables más importantes son las que ya habíamos identificado en los árboles de decisión normales. Respecto a la segunda resulta interesante como el error para predecir que alguien ha sobrevivido es más del doble que el caso contrario, esto seguramente se deba a que nos encontramos ante un problema no balanceado donde la clase minoritaria es sobrevivir, por ello existen menos muestras y resulta más complicado predecirlas. Otra cosa curiosa de esta gráfica es que a pesar de que la validación con las observaciones Out-Of-Bag fija la tasa de error entorno al 0.17 cuando usamos los datos de test reales esta se sitúa casi en el 0.25, muy superior a la esperada.
+
+<img src="imgs/ImportanceRF.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 235px; height: auto; display: block; float:left;">
+
+<img src="imgs/RFError.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 245px; height: auto; display: block; float:left;">
+
+<!-- Salto de página -->
+<div style="page-break-before: always;"></div>
+
+
 ### 3.3. CForest
+Este es un tipo de Random Forest que varía en el tipo de clasificador elemental empleando árboles de inferencia condicional o _conditional inference trees_, que toman sus decisiones usando tests estadísticos en lugar de simplemente la medida de Gini. La versión que he utilizado se encuentra en el paquete de R `party` y se construye de la siguiente forma:
+```
+fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID,
+               data = train,
+               controls=cforest_unbiased(ntree=2000, mtry=3))
+```
+En esta ocasión especifico como parámetros el número de arboles (2000) y el número de variables a usar en cada árbol (3). Tambíen destacar como se puede observar que no ha sido necesario pasarle la versión reducida de la variable `FamilyID` ya que estos árboles son capaces de manejar un número mayor de factores.
+
+Con este algoritmo he constuido diversos modelos variando el preprocesamiento aplicado
+
 
 ## 4. Presentación y discusión de resultados
 Grafica arbol inicial.
