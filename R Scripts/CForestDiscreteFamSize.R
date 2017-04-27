@@ -158,15 +158,6 @@ test <- full[892:1309,]
 # Set a random seed to reproducible prediction
 set.seed(415)
 
-
-fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
-                      Embarked + Title + FamilySizeDiscrete + FamilyID2,
-                    data=train, 
-                    importance=TRUE, 
-                    ntree=2000)
-# Plot the most important variables
-varImpPlot(fit)
-
 # Create a Conditional inference forest predictor
 fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
                  Embarked + Title + FamilySizeDiscrete + FamilyID,
