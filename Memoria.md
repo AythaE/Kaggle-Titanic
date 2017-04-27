@@ -48,13 +48,12 @@ Ejemplo de Indice final eliminando el enlace y añadiendo el número de página
   * [2.1. Integración y detección de conflictos e inconsistencias en los datos](#21-integracion-y-deteccion-de-conflictos-e-inconsistencias-en-los-datos)
   * [2.2. Transformaciones](#22-transformaciones)
   * [2.3. Reducción de datos](#23-reduccion-de-datos)
-- [3. Técnicas de clasificación](#3-tecnicas-de-clasificacion)
+- [3. Técnicas de clasificación y discusión de resultados](#3-tecnicas-de-clasificacion-y-discusion-de-resultados)
   * [3.1. Árbol de decisión simple](#31-arbol-de-decision-simple)
   * [3.2. Random Forest](#32-random-forest)
   * [3.3. CForest](#33-cforest)
-- [4. Presentación y discusión de resultados](#4-presentacion-y-discusion-de-resultados)
-- [5. Conclusiones y trabajos futuros](#5-conclusiones-y-trabajos-futuros)
-- [6. Listado de soluciones](#6-listado-de-soluciones)
+- [4. Conclusiones y trabajos futuros](#4-conclusiones-y-trabajos-futuros)
+- [5. Listado de soluciones](#5-listado-de-soluciones)
 - [Bibliografía](#bibliografia)
 
 <!-- tocstop -->
@@ -98,7 +97,7 @@ Fare        | Tarifa del pasaje
 Cabin       | Cabina
 Embarked    | Puerto de embarque
 
-El problema a resolver es predecir el valor de la variable "Survived", en un primer análisis de la distribución de valores de esta variable se observa que solo se salvaron el 38,38% de los pasajeros.
+El problema a resolver es predecir el valor de la variable **`Survived`**, en un primer análisis de la distribución de valores de esta variable se observa que solo se salvaron el 38,38% de los pasajeros.
 
 ```
 > prop.table(table(train$Survived))
@@ -109,7 +108,7 @@ El problema a resolver es predecir el valor de la variable "Survived", en un pri
 Por ello siguiendo [2] como modelo inicial se puede predecir que todos mueren con lo que se consigue un porcentaje de acierto sobre test de 62,679% lo que cuadra con las observaciones realizadas sobre el conjunto de entrenamiento.
 
 ### 1.1. Las mujeres y los niños primero
-En la sabiduría popular es famosa la frase "Las mujeres y los niños primero" así que resulta lógico buscar como se relacionan la edad y el sexo con las tasas de supervivencia. Si vemos la supervivencia entre hombres y mujeres vemos que es muy diferente salvándose muchas más mujeres:
+En la sabiduría popular es famosa la frase "Las mujeres y los niños primero" así que resulta lógico buscar como se relacionan la **edad** y el **sexo** con las tasas de supervivencia. Si vemos la supervivencia entre hombres y mujeres vemos que es muy diferente salvándose muchas más mujeres:
 ```
 > prop.table(table(train$Sex, train$Survived),1)
 
@@ -136,7 +135,7 @@ A modo de resumen de esto veáse la siguiente gráfica
 Por todo ello se deduce que la edad y el sexo tendrán un papel determinante en la supervivencia, habrá que tratar la edad ya que contiene 177 valores perdidos (cerca del 20%).
 
 ### 1.2. Clase social
-Otro factor que en principio podría ser determinante es la clase social ya que existían profundas diferencias en el pasaje del Titanic. Esto puede venir representado en la clase del billete (variable `Pclass`) o en el precio de este (`Fare`). Si comenzamos analizando la clase del pasaje se observa que obviamente existen muchos menos billetes de 1ª y 2ª clase que de 3ª. Analizando el porcentaje de supervivencia se puede apreciar en la siguiente gráfica como los pasajeros de las clases elevadas tenían más del doble del porcentaje de supervivencia que los de clase 3.
+Otro factor que en principio podría ser determinante es la clase social ya que existían profundas diferencias en el pasaje del Titanic. Esto puede venir representado en la clase del billete (variable **`Pclass`**) o en el precio de este (**`Fare`**). Si comenzamos analizando la clase del pasaje se observa que obviamente existen muchos menos billetes de 1ª y 2ª clase que de 3ª. Analizando el porcentaje de supervivencia se puede apreciar en la siguiente gráfica como los pasajeros de las clases elevadas tenían más del doble del porcentaje de supervivencia que los de clase 3.
 
 <img src="imgs/PorcentajeSupervivenciaPclass.png" alt="Porcentaje de supervivencia por clase" style="width: 300px; height: auto; display: block; margin: auto;"/>
 
@@ -227,13 +226,13 @@ Con esto podemos construir otro modelo que obtiene la misma puntuación que el p
 <div style="page-break-before: always;"></div>
 
 ### 1.4. Otras variables
-La variable `PassengerID` corresponde a un identificador único del pasajero por lo que no aportaría nada a predecir su supervivencia o no. Respecto al atributo `Name` en principio podría parecer que nos encontramos ante un caso similar, pero este no solo contiene el nombre del pasajero si no su titulo social (Mr para hombre casado, Master para soltero,...) y esta demuestra ser una información muy importante como comentaré en el siguiente apartado. Por acabar con los atributos de identificación el atributo `Ticket` corresponde a un identificador del billete por lo que no lo usaré por idénticos motivos.
+La variable **`PassengerID`** corresponde a un identificador único del pasajero por lo que no aportaría nada a predecir su supervivencia o no. Respecto al atributo **`Name`** en principio podría parecer que nos encontramos ante un caso similar, pero este no solo contiene el nombre del pasajero si no su titulo social (Mr para hombre casado, Master para soltero,...) y esta demuestra ser una información muy importante como comentaré en el siguiente apartado. Por acabar con los atributos de identificación el atributo **`Ticket`** corresponde a un identificador del billete por lo que no lo usaré por idénticos motivos.
 
-Los atributos `SibSp` y `Parch` dan una idea del tamaño de la familia que se encuentra a bordo del barco lo cual puede ser útil para determinan la supervivencia o no de las diferentes familias como se explicará en el siguiente apartado.
+Los atributos **`SibSp`** y **`Parch`** dan una idea del tamaño de la familia que se encuentra a bordo del barco lo cual puede ser útil para determinan la supervivencia o no de las diferentes familias como se explicará en el siguiente apartado.
 
-El atributo `Cabin` podría ser interesante conociendo la posición de los camarotes del barco pero tiene un total de 687 valores perdidos de 891 lo que imposibilita usarlo en la práctica.
+El atributo **`Cabin`** podría ser interesante ya que probablemente la posición del camarote tendria influencia en la supervivencia pero tiene un total de 687 valores perdidos de 891 lo que imposibilita usarlo en la práctica.
 
-El atributo `Embarked` podría ser interesante a priori si observamos los porcentajes de supervivencia donde Cherbourg destaca por encima de todos, mencionar que la primer fila corresponde a 2 valores perdidos de este atributo.
+El atributo **`Embarked`** parece ser determinante a pesar de lo que dicta el sentido común, si observamos los porcentajes de supervivencia Cherbourg destaca por encima de todos, mencionar que la primer fila corresponde a 2 valores perdidos de este atributo.
 ```
 > prop.table(table(train$Embarked, train$Survived),1)
 
@@ -260,7 +259,7 @@ Como ya he comentado en el apartado previo existen diversas variables con valore
 
 Como he concluido en el análisis exploratorio la **edad** parece ser un factor determinante para predecir la supervivencia, también como he comentado tiene cerca del 20% de valores perdidos, por lo que una imputación podría mejorar sustancialmente la calidad de los modelos construidos. Para realizar esta imputación he probado dos técnicas distintas:
 
-- **Árbol de regresión**: usando el paquete `rpart` y su método homónimo con el método "anova" he predicho los valores perdidos usando las variables `Pclass`, `Sex`, `SibSp`, `Parch`, `Fare`, `Embarked`, `Title` y `FamilySize`. En la siguiente gráfica se puede observar la distribución de frecuencias relativas de la edad antes y después de imputar.
+- **Árbol de regresión**: usando el paquete `rpart` y su función homónima con el método "anova" he predicho los valores perdidos usando las variables `Pclass`, `Sex`, `SibSp`, `Parch`, `Fare`, `Embarked`, `Title` y `FamilySize`. En la siguiente gráfica se puede observar la distribución de frecuencias relativas de la edad antes y después de imputar.
 
 <img src="imgs/AgeImputationAnova.png" alt="Distribución de frecuencias de la edad" style="width: 250px; height: auto; display: block; margin: auto;">
 
@@ -312,8 +311,8 @@ Como se aprecia en el siguiente gráfico de mosaico existen más posibilidades d
 
 A pesar de esto no he conseguido mejorar mis resultados con esta discretización. Por ello se me ocurrió que otra forma de reflejar estas penalizaciones de supervivencia respecto al tamaño de la familia, al menos parcialmente, era usar el atributo **`FamilyID`** cambiando el criterio de considerar a una familia pequeña de 2 miembros (que teóricamente tiene más posibilidades de sobrevivir) a 1, con lo que obtengo un número mayor de ids, pero otra vez más tampoco esto funciona como puedo esperar.
 
-## 3. Técnicas de clasificación
-Antes de comentar las técnicas de clasificación utilizadas comentar que antes de usar ninguna técnica propiamente dicha he creado ciertos "modelos" iniciales como ya he ido comentando en el análisis exploratorio de datos. Estos modelos se basan en conclusiones iniciales extraídas de los datos y en principio son muy simples, pero llegan a ofrecer resultados bastante decentes de hasta un 77,99% lo que destaca la importancia del análisis exploratorio en un proceso de analítica de datos.
+## 3. Técnicas de clasificación y discusión de resultados
+Antes de comentar las técnicas de clasificación utilizadas mencionar que antes de usar ninguna técnica propiamente dicha he creado ciertos "modelos" iniciales como ya he ido diciendo en el análisis exploratorio de datos. Estos modelos se basan en conclusiones iniciales extraídas de los datos y en principio son muy simples, pero llegan a ofrecer resultados bastante decentes de hasta un 77,99% lo que destaca la importancia del análisis exploratorio en un proceso de analítica de datos.
 
 También a modo general las técnicas que he empleado se engloban todas dentro de los árboles de decisión. He decidido decantarme por esta familia de clasificadores contra otros porque probablemente sean uno de los modelos más usados que además permite cierta interpretabilidad contra otros clasificadores como pueden ser las redes neuronales o las SVM. Junto a esto destacar que los últimos modelos son ensembles de arboles, es decir conjuntos de arboles distintos que clasifican y llegan a un acuerdo posterior, esto hace que se resuelvan los posibles problemas de sobreaprendizaje que puede sufrir un árbol de decisión individual y permite crear un modelo más robusto.
 
@@ -324,7 +323,7 @@ Primero concretaré el modelo de árbol de decisión empleado. Me he decantado p
              data=train,
              method="class")
 ```
-Dicho modelo alcanza una puntuación de 78,469% de acierto. Como se puede apreciar no se utilizan todos los atributos para predecir, si no unos cuantos que han demostrado tener influencia en la supervivencia durante el análisis exploratorio. En la siguiente imagen podemos apreciar la forma que tiene este árbol, en verde aparecen los nodos con una mayoría que no ha sobrevivido y en ázul los que sí. Se observa que no es muy grande y que los atributos que primero aparecen (los más discriminantes) son precisamente los que he identificado en el análisis exploratorio. Contemplando esta imagen ºsale a relucir una característica fundamental de los árboles de decisión, su interpretabilidad, no resulta necesario saber como funciona internamente, simplemente viendo esta imagen cualquiera podría clasificar manualmente instancias siguiendo los pasos que se indican en cada bifurcación.
+Dicho modelo alcanza una puntuación de 78,469% de acierto. Como se puede apreciar no se utilizan todos los atributos para predecir, si no unos cuantos que han demostrado tener influencia en la supervivencia durante el análisis exploratorio. En la siguiente imagen podemos apreciar la forma que tiene este árbol, en verde aparecen los nodos con una mayoría que no ha sobrevivido y en ázul los que sí. Se observa que no es muy grande y que los atributos que primero aparecen (los más discriminantes) son precisamente los que he identificado en el análisis exploratorio. Contemplando esta imagen sale a relucir una característica fundamental de los árboles de decisión, su interpretabilidad, no resulta necesario saber como funciona internamente, simplemente viendo esta imagen cualquiera podría clasificar manualmente instancias siguiendo los pasos que se indican en cada bifurcación.
 
 <img src="imgs/initialDTree.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 300px; height: auto; display: block; margin: auto;">
 
@@ -334,16 +333,16 @@ fit <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + T
              data=train,
              method="class")
 ```
-Que llega a alcanzar el 79,426% de acierto. En la siguiente imagen aparece la representación de este árbol, en esta ocasión las variables generadas han desplazado a las iniciales por lo que podemos deducir que son más importantes para determinar si una persona sobrevive o no.
+Que llega a alcanzar el 79,426% de acierto. En la siguiente imagen aparece la representación de este árbol. En esta ocasión las variables generadas han desplazado a las iniciales por lo que podemos deducir que son más importantes para determinar si una persona sobrevive o no.
 
 <img src="imgs/FengineDTree.png" alt="Supervivencia respecto a tamaño de la familia" style="width: 300px; height: auto; display: block; margin: auto;">
 
 ### 3.2. Random Forest
-Random forest es un tipo de ensemble que comentaba antes formado por multiples árboles de decisión individuales, en concreto pertenece a los tipo bagging que se caracteriza porque los clasificadores individuales clasifican por separado y la clase final se asigna por voto mayoritario. Este es un algoritmo muy utilizado y que da baste buenos resultados, se basa en la creación de un elevado número de arboles de decisión con selección aleatoria de un pequeño número de variables para cada uno (por defecto la raíz cuadrada del número de variables) y usando muestreo con remplazamiento para la selección de items. Con esto construye árboles sin podar usando la medida de Gini para realizar las divisiones en los nodos. Esto en principio creará clasificadores individuales muy adaptados a los datos y que sufrirán de sobreentrenamiento con alta probabilidad, a priori puede parecer una desventaja, pero el hecho de tener un elevado número de arboles individuales cada uno sobreentrenado de distinta manera hace que los errores de unos se compensen los los otros.
+Random forest es un tipo de ensemble que comentaba antes formado por multiples árboles de decisión individuales, en concreto pertenece a los tipo bagging que se caracteriza porque los clasificadores individuales clasifican por separado y la clase final se asigna por voto mayoritario. Este es un algoritmo muy utilizado y que da baste buenos resultados, se basa en la creación de un elevado número de arboles de decisión con selección aleatoria de un pequeño número de variables para cada uno (por defecto la raíz cuadrada del número de variables) y usando muestreo con remplazamiento para la selección de items. Con esto construye árboles sin podar usando la medida de Gini para realizar las divisiones en los nodos. En principio creará clasificadores individuales muy adaptados a los datos y que sufrirán de sobreentrenamiento con alta probabilidad, a priori puede parecer una desventaja, pero el hecho de tener un elevado número de arboles individuales cada uno sobreentrenado de distinta manera hace que los errores de unos se compensen los de otros.
 
-En concreto he usado el paquete `randomForest` de R, este tiene varias limitaciones como que no funciona bien con valores perdidos, por ello elimino los valores perdidos de las variables que usaré: `Age`, `Fare` y `Embarked` como he descrito previamente. Adicionalmente es necesario reducir los valores de la variable `FamilyID` ya que el algoritmo solo puede procesar factores de hasta 32 niveles (valores distintos) y esta variable tiene casi el doble. Para ello determino que se considere familia pequeña a aquella con tres o menos miembros en lugar de dos, con esto genero una variable `FamilyID2` de 22 niveles.
+En concreto he usado el paquete `randomForest` de R, este tiene varias limitaciones como que no funciona bien con valores perdidos, por ello elimino los valores perdidos de las variables que usaré: `Age` utilizando un árbol de regresión, `Fare` y `Embarked` como he descrito previamente. Adicionalmente es necesario reducir los valores de la variable `FamilyID` ya que el algoritmo solo puede procesar factores de hasta 32 niveles (valores distintos) y esta variable tiene casi el doble. Para ello determino que se considere familia pequeña a aquella con tres o menos miembros en lugar de dos, con esto genero una variable `FamilyID2` de 22 niveles.
 
-Una vez preparados los datos de igual modo que con el arbol de decisión individual creo el modelo con el siguiente código especificando como parámetro que se creen 2000 árboles.
+Una vez preparados los datos de igual modo que con el árbol de decisión individual creo el modelo con el siguiente código especificando como parámetro que se creen 2000 árboles.
 ```
 fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamilySize + FamilyID2,
                     data=train,
@@ -378,40 +377,40 @@ fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare +
 ```
 En esta ocasión especifico como parámetros el número de arboles (2000) y el número de variables a usar en cada árbol (3). Tambíen destacar como se puede observar que no ha sido necesario pasarle la versión reducida de la variable `FamilyID` ya que estos árboles son capaces de manejar un número mayor de factores.
 
-Con este algoritmo he constuido diversos modelos variando el preprocesamiento aplicado
+Con este algoritmo he construido diversos modelos variando el preprocesamiento aplicado:
+- Un modelo inicial usando como preprocesamiento `FamilySize` sin discretizar, `Tittle` agrupado del primer modo y `FamilyID` considerando familia pequeña a aquella con menos de 2 miembros,  además se imputa la edad con árbol de regresión. Con este modelo se obtiene el mejor resultado 81,34%
+- Una variación discretizando el tamaño de la familia en individual, pequeña y grande que obtiene una putuación de 80,38%.
+- Otra variación siguiendo la segunda discretización de títulos de [4], considerando el `FamilyID` pequeño si la familia tiene un único miembro e imputando la edad con `mice`. Obteniendo otra vez un 80,38%.
+- Por último he probado a crear dos modelos separados para hombres y mujeres esperando que los dos modelos individuales se especialicen en predecir a sus individuos y el resultado final sea mejor, ya que los hombres y las mujeres se comportan de manera muy diferente. Como configuración he utilizado la misma que la del modelo inicial ya que parece ser la que mejor me ha funcionado. En esta ocasión el resultado es idéntico al del modelo inicial.
 
+Como se puede ver mis intentos de variar el preprocesamiento para obtener mejores resultados han sido infructuosos, sería necesario profundizar en este proceso o intentar utilizar otras característias distintas, no he tenido éxito por no haber realizado suficientes pruebas.
 
-## 4. Presentación y discusión de resultados
-Grafica arbol inicial.
-Grafica importancia.
+## 4. Conclusiones y trabajos futuros
+Comenzaré a hablar de los trabajos futuros ya que me da la impresión de que hay más cosas que me hubiera podido probar pero no lo he hecho por falta de tiempo.
+- Lo primero que se podría probar sería otro algoritmo de ensemble de arboles de la familia boosting conocido como Xgboost que está demostrando ser de los algoritmos de clasificación más potentes en diversas competiciones, sé que algunos compañeros lo han probado sin éxito probablemente debido a que es un algoritmo muy sensible al ruido de clase y sería necesario limpiar el dataset.
+- Otra cosa que me hubiera gustado intentar es diversas técnicas para tratar las clases no balanceadas oversampling (SMOTE) o undersampling analizando como varía el comportamiento de los algoritmos al aplicar estas técnicas.
+- Probar otros preprocesamientos como el seguido por [3] que utilizando algunas carácterísticas que yo he ignorado como la cabina o el ticket afirma alcanzar un 82,78% de acierto con un modelo construido en Python.
 
-Comentar prueba final toqueteando parametros que no lleva a ningun lado, habria que profundizar
-## 5. Conclusiones y trabajos futuros
-Falta de tiempo
-
-Xgboost pero tal cual parece dar problemas, probar tecnicas que le vayan bien como Smote
-
-Seguir preprocesamiento de [3] y toquetear los parámetros de clasificador
 <!-- Salto de página -->
 <div style="page-break-before: always;"></div>
 
-## 6. Listado de soluciones
-La siguiente tabla recoge las distintas soluciones presentadas en Kaggle, tengo que mencionar inicialmente que son 11 filas en lugar de 12 a pesar de ser estos mis intentos en Kaggle. Esto se debe a que he subido la solución 3 dos veces debido a que se produjo un error durante la subida y lo volví a subir, por esto no la menciono en la tabla. Respecto a las posiciones del ranking son algo aproximadas ya que seleccionando una entrega como solución final no varia el ranking de Kaggle, por lo que he aproximado a las posiciones ocupadas por puntuaciones idénticas. Como software utilizado para todos los intentos se ha utilizado RStudio y los paquetes y funciones indicadas en la lista de abreviaturas.
+## 5. Listado de soluciones
+La siguiente tabla recoge las distintas soluciones presentadas en Kaggle, tengo que mencionar inicialmente que son 11 filas en lugar de 12 a pesar de ser estos mis intentos en Kaggle. Esto se debe a que he subido la solución 3 dos veces ya que se produjo un error durante la subida y lo volví a subir, por esto no la menciono en la tabla. Respecto a las posiciones del ranking son algo aproximadas ya que seleccionando una entrega como solución final no varia el ranking de Kaggle, por lo que he aproximado a las posiciones ocupadas por puntuaciones idénticas. Como software utilizado para todos los intentos se ha utilizado RStudio y los paquetes y funciones indicadas en la lista de abreviaturas.
 La siguiente lista de abreviaturas por orden alfabético recoge los preprocesamientos y algoritmos utilizados para las distintas soluciones:
-- AD1: Árbol de decisión usando el paquete y función `rpart` con el método "class" prediciendo la variable Survived usando Pclass, Sex, Age, SibSp, Parch, Fare y Embarked.
-- AD2: Árbol de decisión usando el paquete y función `rpart` con el método "class" prediciendo la variable Survived usando Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID.
-- CRF: Random Forest usando como unidad elemental conditional inference trees con la función `cforest` del paquete `party`, 2000 árboles y 3 variables aleatorias a elegir en cada nodo. Predice en función de Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID.
-- CRFDS: Igual algoritmo que el previo pero creando dos modelos separados para hombres y mujeres, prediciendo hombres y mujeres por separado y luego uniendo los resultados.
-- HM: Todos los hombres mueren.
-- MSP3: Todas las mujeres se salvan menos las de la clase P3 que pagaron más de 20 por su billete.
-- MSP3 + NHP3: Todas las mujeres se salvan menos las de la clase P3 que pagaron más de 20 por su billete y además todos los niños (menores de 18 años) hombres se salvan a expción de los de clase P3 que pagaron menos de 10 o más de 20.
-- NA: Nada de preprocesamiento.
-- RF: Random Forest del paquete homónimo con 2000 árboles prediciendo a partir de Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID2 (como Family ID pero considerando familia grande las de más de 3 miembros).
-- TFSFID: Extracción del título social a partir del nombre, cálculo del tamaño de la familia en función de SibSp y Parch, además de generación de un ID de familias grandes (+ de 2 miembros).
-- TFSFID + IEEF: Mismo preprocesamiento que el previo pero añadiendo imputación de la edad usando un árbol de regresión Anova a partir de Pclass, Sex, SibSp, Parch, Fare, Embarked, Title y FamilySize; imputación de los datos perdidos de embarque por el puerto más numeroso ("S") y de los datos perdidos del precio del pasaje por la mediana de su distribución.
-- TFSFID2 + IEEF: Igual que lo anterior pero discretizando el tamaño de familia en "single" si < 2, "small" si > 1 y < 5 y "large" si > 4.
-- TFSFID3 + IEEF: Igual preprocesamiento pero agrupando los títulos de manera distinta, considerando familia grande la que tiene 2 o más miembros y realizando la imputación de la edad usando el paquete `mice` y el método `rf`.
-- TM: Como "algoritmo" se asume que todos mueren.
+- **AD1**: Árbol de decisión usando el paquete y función `rpart` con el método "class" prediciendo la variable Survived usando Pclass, Sex, Age, SibSp, Parch, Fare y Embarked.
+- **AD2**: Árbol de decisión usando el paquete y función `rpart` con el método "class" prediciendo la variable Survived usando Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID.
+- **CRF**: Random Forest usando como unidad elemental conditional inference trees con la función `cforest` del paquete `party`, 2000 árboles y 3 variables aleatorias a elegir en cada nodo. Predice en función de Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID.
+- **CRFDS**: Igual algoritmo que el previo pero creando dos modelos separados para hombres y mujeres, prediciendo hombres y mujeres por separado y luego uniendo los resultados.
+- **HM**: Todos los hombres mueren.
+- **MSP3**: Todas las mujeres se salvan menos las de la clase P3 que pagaron más de 20 por su billete.
+- **MSP3 + NHP3**: Todas las mujeres se salvan menos las de la clase P3 que pagaron más de 20 por su billete y además todos los niños (menores de 18 años) hombres se salvan a expción de los de clase P3 que pagaron menos de 10 o más de 20.
+- **NA**: Nada de preprocesamiento.
+- **RF**: Random Forest del paquete homónimo con 2000 árboles prediciendo a partir de Pclass, Sex, Age, SibSp, Parch, Fare, Embarked, Title, FamilySize y FamilyID2 (como Family ID pero considerando familia grande las de más de 3 miembros).
+- **TFSFID**: Extracción del título social a partir del nombre, cálculo del tamaño de la familia en función de SibSp y Parch, además de generación de un ID de familias grandes (+ de 2 miembros).
+- **TFSFID + IEEF**: Mismo preprocesamiento que el previo pero añadiendo imputación de la edad usando un árbol de regresión Anova a partir de Pclass, Sex, SibSp, Parch, Fare, Embarked, Title y FamilySize; imputación de los datos perdidos de embarque por el puerto más numeroso ("S") y de los datos perdidos del precio del pasaje por la mediana de su distribución.
+- **TFSFID2 + IEEF**: Igual que lo anterior pero discretizando el tamaño de familia en "single" si < 2, "small" si > 1 y < 5 y "large" si > 4.
+- **TFSFID3 + IEEF**: Igual preprocesamiento pero agrupando los títulos de manera distinta, considerando familia grande la que tiene 2 o más miembros y realizando la imputación de la edad usando el paquete `mice` y el método `rf`.
+- **TM**: Como "algoritmo" se asume que todos mueren.
 
 
 Nº de solución | Descripción Preprocesamiento | Algoritmos y Software | % Acierto en entrenamiento | % Acierto en test | Posición del Ranking
